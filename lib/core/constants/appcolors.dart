@@ -11,5 +11,7 @@ class AppColors {
   static const Color iconBg = Color(0xFFE8F1F9);
   static const Color hintText = Color(0xFFA0AEC0);
   static const Color income = Color(0xFF34D399); // Green
-  static const Color expense = Color(0xFFF87171); // Red
+  static const Color expense = Color(0xFFF87171);
+
+  static Color? get white => Colors.white; // Red
 }

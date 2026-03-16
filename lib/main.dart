@@ -30,18 +30,19 @@ class CashFlow extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder(
-        stream: AuthServices().user,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Scaffold(body: Center(child: CircularProgressIndicator()));
-          } else if (snapshot.data == null) {
-            return LoginScreen();
-          } else {
-            return HomeScreen();
-          }
-        },
-      ),
+      // home: StreamBuilder(
+      //   stream: AuthServices().user,
+      //   builder: (context, snapshot) {
+      //     if (snapshot.connectionState == ConnectionState.waiting) {
+      //       return Scaffold(body: Center(child: CircularProgressIndicator()));
+      //     } else if (snapshot.data == null) {
+      //       return LoginScreen();
+      //     } else {
+      //       return HomeScreen();
+      //     }
+      //   },
+      // ),
+      home: LoginScreen(),
     );
   }
 }
