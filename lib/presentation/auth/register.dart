@@ -1,210 +1,128 @@
+import 'package:cash_flow/core/constants/appcolors.dart';
+import 'package:cash_flow/core/services/auth.dart';
+import 'package:cash_flow/core/widgets/buttons.dart';
+import 'package:cash_flow/core/widgets/textFields.dart';
+import 'package:cash_flow/data/user.dart';
 import 'package:cash_flow/presentation/auth/login.dart';
 import 'package:cash_flow/presentation/home.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/appcolors.dart';
-import '../../core/widgets/componets.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
-
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  late final TextEditingController nameController,
-      emailController,
-      passwordController;
-
-  late final Map<String, List<dynamic>> textFieldMap = {};
-  final _key = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    super.initState();
-    nameController = TextEditingController();
-    emailController = TextEditingController();
-    passwordController = TextEditingController();
-    textFieldMap.addAll({
-      'field1': ['Rakesh Sharma', nameController],
-      'field2': ['example@gmail.com', emailController],
-      'field3': ['password', passwordController],
-    });
-  }
+class _SignupScreenState extends State<SignupScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Padding(
+      appBar: AppBar(
+        title: const Text(
+          'CashFlow',
+          style: TextStyle(
+            color: AppColors.darkText,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.darkText),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 34,
-          children: [
-            Text(
-              'CREATE ACCOUNT',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 30),
-            ),
-            Form(
-              key: _key,
-              child: Column(
-                // mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 20,
-                // children: textFieldMap.map((key,value) => AppTextFields.authInputField(hintText: value[0], controller: value[1]))toList(),
-                children: [
-                  AppTextFields.authInputField(
-                    hintText: 'Rakesh Sharma',
-                    controller: nameController,
-                  ),
-                  AppTextFields.authInputField(
-                    hintText: 'example@gmail.com',
-                    controller: emailController,
-                    isEmail: true,
-                  ),
-                  AppTextFields.authInputField(
-                    hintText: 'password',
-                    controller: passwordController,
-                  ),
-                  AppButtons.primaryButton(
-                    text: 'Sign Up',
-                    onTap: () async {
-                      if (_key.currentState!.validate()) {
-                        try {
-                          await FirebaseAuth.instance
-                              .createUserWithEmailAndPassword(
-                                email: emailController.text,
-                                password: passwordController.text,
-                              );
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
-                            ),
-                          );
-                        } on FirebaseAuthException catch (e) {
-                          String message;
-                          switch (e.code) {
-                            case 'email-already-in-use':
-                              message =
-                                  'This email is already registered. Try login instead';
-                              break;
-                            case 'invalid-email':
-                              message = 'Invalid email format.';
-                              break;
-                            case 'weak-password':
-                              message =
-                                  'Password should be at least 6 characters.';
-                              break;
-                            default:
-                              message =
-                                  'Registration failed. Please try again.';
-                          }
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text(message)));
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('An unexpected error occurred.'),
-                            ),
-                          );
-                        }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Fill all the fields')),
-                        );
-                      }
-                    },
-                  ),
-                ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              const Text(
+                'Create Account',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.darkText,
+                ),
               ),
-            ),
-            Row(
-              spacing: 10,
-              children: [
-                Expanded(
-                  child: Divider(thickness: 2, color: AppColors.greyTextColor),
-                ),
-                Text(
-                  'Or',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: AppColors.greyTextColor,
-                  ),
-                ),
-                Expanded(
-                  child: Divider(thickness: 2, color: AppColors.greyTextColor),
-                ),
-              ],
-            ),
-            AppButtons.googleAuthButton(
-              text: 'Sign Up With Google',
-              onTap: () async{
-                try{
-                  print('Attempting Google Sign In');
-                  UserCredential? user = await signInWithGoogle();
-                  if(user != null && user.user != null){
-                    print('User signed in: ${user.user!.email}');
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>HomeScreen(userCredential: user,)));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Successfully authenticated')),
-                    );
-                  } else {
-                    print('Sign in cancelled or failed');
-                  }
-                }catch(err){
-                  print('Error during Google Sign In: $err');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Something went wrong. Try again later')),
-                  );
-                }
-              },
-            ),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                text: 'Already have an account? ',
-                style: TextStyle(fontSize: 18),
-                children: [
-                  TextSpan(
-                    text: 'Sign in',
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () {
-                        Navigator.push(
+              const Text(
+                'Fill in the details to get started',
+                style: TextStyle(fontSize: 16, color: AppColors.secondaryText),
+              ),
+              const SizedBox(height: 32),
+              AppTextField(
+                label: 'Full Name',
+                hintText: 'Enter your full name',
+                controller: _nameController,
+                validator: (value) =>
+                    value!.isEmpty ? 'Please enter your name' : null,
+              ),
+              const SizedBox(height: 20),
+              AppTextField(
+                label: 'Email',
+                hintText: 'Enter your email',
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) =>
+                    value!.contains('@') ? null : 'Enter a valid email',
+              ),
+              const SizedBox(height: 20),
+              AppTextField(
+                label: 'Password',
+                hintText: 'Create a password',
+                controller: _passwordController,
+                isPassword: true,
+                validator: (value) =>
+                    value!.length < 6 ? 'Min 6 characters required' : null,
+              ),
+              const SizedBox(height: 20),
+              AppTextField(
+                label: 'Confirm Password',
+                hintText: 'Repeat your password',
+                controller: _confirmPasswordController,
+                isPassword: true,
+                validator: (value) => value != _passwordController.text
+                    ? 'Passwords do not match'
+                    : null,
+              ),
+              const SizedBox(height: 32),
+              AppButton(
+                text: 'Sign Up',
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    AppUser? user = await AuthServices()
+                        .createUserWithEmailAndPassword(
+                          _nameController.text.trim(),
+                          _emailController.text.trim(),
+                          _passwordController.text.trim(),
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => LoginScreen(),
-                          ),
                         );
-                      },
-                    style: TextStyle(decoration: TextDecoration.underline),
-                  ),
-                ],
+                    if (user != null) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HomeScreen(user: user),
+                        ),
+                      );
+                    }
+                  }
+                },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-Future<UserCredential> signInWithGoogle() async {
-  final googleUser = await GoogleSignIn.instance.authenticate();
-  final googleAuth = await googleUser.authentication;
-
-  final credential = GoogleAuthProvider.credential(
-    idToken: googleAuth.idToken,
-  );
-
-  return await FirebaseAuth.instance.signInWithCredential(credential);
 }
