@@ -1,15 +1,13 @@
-import 'dart:async';
-
 import 'package:cash_flow/core/services/auth.dart';
-import 'package:cash_flow/data/database.dart';
 import 'package:cash_flow/presentation/auth/login.dart';
-import 'package:cash_flow/presentation/auth/register.dart';
-import 'package:cash_flow/presentation/home.dart';
+import 'package:cash_flow/presentation/viewmodel/viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'core/widgets/nav_bar.dart';
+import 'data/user.dart';
 import 'firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,21 +26,41 @@ class CashFlow extends StatelessWidget {
   const CashFlow({super.key});
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      // home: StreamBuilder(
-      //   stream: AuthServices().user,
-      //   builder: (context, snapshot) {
-      //     if (snapshot.connectionState == ConnectionState.waiting) {
-      //       return Scaffold(body: Center(child: CircularProgressIndicator()));
-      //     } else if (snapshot.data == null) {
-      //       return LoginScreen();
-      //     } else {
-      //       return HomeScreen();
-      //     }
-      //   },
-      // ),
-      home: LoginScreen(),
+    return ChangeNotifierProvider(
+      create: (context) => UserViewModel(),
+      builder: (context, child) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Cash Flow',
+        home: Consumer<UserViewModel>(
+          builder: (context, userProvider, child) {
+            return StreamBuilder(
+              stream: AuthServices().user,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  userProvider.setLoading(true);
+                  return Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.data == null) {
+                  userProvider.updateUser(null);
+                  return LoginScreen();
+                } else {
+                  // Convert your Firebase user to AppUser
+                  final firebaseUser = snapshot.data;
+                  final appUser = AppUser(
+                    uid: firebaseUser?.uid,
+                    username: firebaseUser?.displayName,
+                    email: firebaseUser?.email,
+                    photoURL: firebaseUser?.photoURL,
+                  );
+                  userProvider.updateUser(appUser);
+                  return MainNavigationScreen();
+                }
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 }

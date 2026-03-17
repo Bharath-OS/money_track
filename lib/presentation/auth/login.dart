@@ -7,6 +7,10 @@ import 'package:cash_flow/core/widgets/textFields.dart';
 import 'package:cash_flow/data/user.dart';
 import 'package:cash_flow/presentation/auth/register.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/widgets/alerts.dart';
+import '../viewmodel/viewmodel.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -105,6 +109,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             context,
                           );
                       if (user != null) {
+                        final userDetail = Provider.of<UserViewModel>(
+                          context,
+                          listen: false,
+                        );
+                        userDetail.setCurrentUser = user;
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -126,15 +135,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 SocialAuthButton(
                   text: 'Continue with Google',
                   iconPath: '',
-                  onPressed: () {},
-                ),
-                const SizedBox(height: 12),
-                SocialAuthButton(
-                  text: 'Continue with Microsoft',
-                  iconPath: '',
-                  onPressed: () {},
+                  onPressed: () async {
+                    Map<AppUser?, String> user = await AuthServices()
+                        .signInWithGoogle(context);
+                    if (!user.keys.contains(null)) {
+                      final userDetail = Provider.of<UserViewModel>(
+                        context,
+                        listen: false,
+                      );
+                      userDetail.setCurrentUser = user.keys.first;
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MainNavigationScreen(),
+                        ),
+                      );
+                    }
+                    AppAlerts.showSnackBar(user.values.first, context);
+                  },
                 ),
 
+                const SizedBox(height: 12),
                 const SizedBox(height: 32),
 
                 // Navigation Link

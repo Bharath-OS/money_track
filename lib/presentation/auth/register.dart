@@ -5,8 +5,11 @@ import 'package:cash_flow/core/widgets/nav_bar.dart';
 import 'package:cash_flow/core/widgets/social_auth_buttons.dart';
 import 'package:cash_flow/core/widgets/textFields.dart';
 import 'package:cash_flow/data/user.dart';
-import 'package:cash_flow/presentation/home.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/widgets/alerts.dart';
+import '../viewmodel/viewmodel.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -23,6 +26,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserViewModel>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -81,6 +85,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           _passwordController.text.trim(),
                           context,
                         );
+                    userProvider.setCurrentUser = user;
                     if (user != null) {
                       Navigator.pushReplacement(
                         context,
@@ -114,15 +119,22 @@ class _SignupScreenState extends State<SignupScreen> {
               SocialAuthButton(
                 text: 'Sign up with Google',
                 iconPath: '',
-                onPressed: () {},
+                onPressed: () async {
+                  Map<AppUser?, String> user = await AuthServices()
+                      .signInWithGoogle(context);
+                  if (!user.keys.contains(null)) {
+                    userProvider.setCurrentUser = user.keys.first;
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MainNavigationScreen(),
+                      ),
+                    );
+                  }
+                  AppAlerts.showSnackBar(user.values.first, context);
+                },
               ),
               const SizedBox(height: 12),
-              SocialAuthButton(
-                text: 'Sign up with Microsoft',
-                iconPath: '',
-                onPressed: () {},
-              ),
-
               const SizedBox(height: 32),
 
               Row(

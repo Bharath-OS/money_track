@@ -1,14 +1,20 @@
 import 'package:cash_flow/core/constants/appcolors.dart';
+import 'package:cash_flow/core/services/auth.dart';
 import 'package:cash_flow/core/widgets/app_fab.dart';
 import 'package:cash_flow/data/user.dart';
+import 'package:cash_flow/presentation/viewmodel/viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'auth/login.dart';
 
 class HomeScreen extends StatelessWidget {
-  AppUser? user;
-  HomeScreen({this.user, super.key});
+  // AppUser? user;
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserViewModel>(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       floatingActionButton: AppFloatingActionButton(onPressed: () {}),
@@ -19,7 +25,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Section
-              _buildHeader(),
+              _buildHeader(userProvider.currentUser?.username, context),
               const SizedBox(height: 24),
 
               // Total Balance Card
@@ -107,7 +113,7 @@ class HomeScreen extends StatelessWidget {
 
   // --- LOCAL REUSABLE WIDGET METHODS ---
 
-  Widget _buildHeader() {
+  Widget _buildHeader(String? userName, BuildContext context) {
     return Row(
       children: [
         const CircleAvatar(
@@ -117,10 +123,10 @@ class HomeScreen extends StatelessWidget {
           ), // Placeholder image
         ),
         const SizedBox(width: 12),
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'WELCOME BACK',
               style: TextStyle(
                 color: AppColors.secondaryText,
@@ -130,8 +136,9 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Text(
-              'Good morning, Alex',
-              style: TextStyle(
+              'Good morning, \n$userName',
+              softWrap: true,
+              style: const TextStyle(
                 color: AppColors.darkText,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -141,15 +148,24 @@ class HomeScreen extends StatelessWidget {
         ),
         const Spacer(),
         Container(
-          padding: const EdgeInsets.all(10),
+          // padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.border),
           ),
-          child: const Icon(
-            Icons.notifications_outlined,
-            color: AppColors.darkText,
+          child: IconButton(
+            onPressed: () {
+              AuthServices().signOut();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+            icon: const Icon(
+              Icons.notifications_outlined,
+              color: AppColors.darkText,
+            ),
           ),
         ),
       ],
