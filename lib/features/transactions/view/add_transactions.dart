@@ -1,7 +1,7 @@
 import 'package:cash_flow/core/services/auth.dart';
-import 'package:cash_flow/data/database.dart';
 import 'package:cash_flow/data/models/transaction_model.dart';
 import 'package:cash_flow/features/viewmodel/viewmodel.dart';
+import 'package:cash_flow/features/transactions/viewmodel/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Add to pubspec.yaml for date formatting
 import 'package:provider/provider.dart';
@@ -94,8 +94,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         note: _noteController.text,
       );
 
-      final result = await DatabaseServices.addTransactions(
-        transaction: newTransaction,
+      final result = await context.read<TransactionViewmodel>().addTransaction(
+        newTransaction,
       );
       if (result) {
         message = 'Transaction added successfully';

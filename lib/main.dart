@@ -1,6 +1,7 @@
 import 'package:cash_flow/core/services/auth.dart';
 import 'package:cash_flow/features/auth/login.dart';
 import 'package:cash_flow/features/viewmodel/viewmodel.dart';
+import 'package:cash_flow/features/transactions/viewmodel/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/widgets/nav_bar.dart';
@@ -26,8 +27,11 @@ class CashFlow extends StatelessWidget {
   const CashFlow({super.key});
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => UserViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => UserViewModel()),
+        ChangeNotifierProvider(create: (context) => TransactionViewmodel()),
+      ],
       builder: (context, child) => MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Cash Flow',
@@ -64,3 +68,4 @@ class CashFlow extends StatelessWidget {
     );
   }
 }
+

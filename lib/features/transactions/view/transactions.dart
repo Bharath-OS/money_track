@@ -1,9 +1,9 @@
-import 'package:cash_flow/data/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/appcolors.dart';
-import '../../../data/models/transaction_model.dart';
+import 'package:provider/provider.dart';
 import 'transaction_details.dart';
+import '../viewmodel/transaction_viewmodel.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -100,10 +100,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.darkText),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: const Text(
           'Transactions',
           style: TextStyle(
@@ -149,32 +145,30 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ),
 
           // 3. Transactions List
-          FutureBuilder(
-            future: DatabaseServices.transactions.get(),
-            builder: (context, snapshots) {
-              if (snapshots.connectionState == ConnectionState.waiting) {
+          Consumer<TransactionViewmodel>(
+            builder: (context, transactionProvider, child) {
+              if (transactionProvider.isLoading) {
                 return const Center(child: CircularProgressIndicator());
-              } else if (snapshots.hasError) {
-                return const Center(child: Text('Error fetching transactions'));
-              } else if (snapshots.data!.docs.isEmpty) {
+              }
+              
+              final transactions = transactionProvider.transactions;
+              
+              if (transactions.isEmpty) {
                 return const Center(child: Text('No transactions found'));
               }
+
               return Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 10,
                   ),
-                  itemCount: snapshots.data!.docs.length,
+                  itemCount: transactions.length,
                   itemBuilder: (context, index) {
-                    final transaction = snapshots.data!.docs[index];
+                    final transactionModel = transactions[index];
 
                     return GestureDetector(
                       onTap: () {
-                        final transactionModel = TransactionModel.fromMap(
-                          transaction.data() as Map<String, dynamic>,
-                          transaction.id,
-                        );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -185,10 +179,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         );
                       },
                       child: _buildTransactionCard(
-                        title: transaction['title'],
-                        category: transaction['category'],
-                        amount: transaction['amount'],
-                        isExpense: transaction['isExpense'],
+                        title: transactionModel.title,
+                        category: transactionModel.category,
+                        amount: transactionModel.amount,
+                        isExpense: transactionModel.isExpense,
                       ),
                     );
                   },
