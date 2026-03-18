@@ -1,27 +1,43 @@
+import 'package:cash_flow/data/models/transaction_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class DatabaseServices {
   static final db = FirebaseFirestore.instance;
-  static final CollectionReference quotes = db.collection('quotes');
-  static void updateQuote({
-    required String title,
-    required String quote,
+  static final CollectionReference transactions = db.collection('transactions');
+
+  static Future<bool> addTransactions({
+    required TransactionModel transaction,
   }) async {
-    await quotes
-        .add({'title': title, 'quote': quote})
-        .then(
-          (_) => ScaffoldMessenger(
-            child: SnackBar(content: Text('quote successfully added')),
-          ),
-        );
+    try {
+      await transactions.doc(transaction.id).set(transaction.toMap());
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
   }
 
-  static void printQuotes() async {
-    await db.collection("users").get().then((event) {
-      for (var doc in event.docs) {
-        print("${doc.id} => ${doc.data()}");
-      }
-    });
+  static Future<bool> updateTransaction({
+    required TransactionModel transaction,
+  }) async {
+    try {
+      await transactions.doc(transaction.id).update({
+        'id': transaction.id,
+        'userId': transaction.userId,
+        'title': transaction.title,
+        'isExpense': transaction.isExpense,
+        'amount': transaction.amount,
+        'category': transaction.category,
+        'date': transaction.date,
+        'paymentMode': transaction.paymentMode,
+        'note': transaction.note,
+        'attachmentUrl': transaction.attachmentUrl,
+      });
+      return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
   }
 }

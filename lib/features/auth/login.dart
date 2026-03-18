@@ -5,7 +5,7 @@ import 'package:cash_flow/core/widgets/nav_bar.dart';
 import 'package:cash_flow/core/widgets/social_auth_buttons.dart';
 import 'package:cash_flow/core/widgets/textFields.dart';
 import 'package:cash_flow/data/user.dart';
-import 'package:cash_flow/presentation/auth/register.dart';
+import 'package:cash_flow/features/auth/register.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

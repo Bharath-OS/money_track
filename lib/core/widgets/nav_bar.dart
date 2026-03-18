@@ -1,5 +1,7 @@
 import 'package:cash_flow/core/constants/appcolors.dart';
-import 'package:cash_flow/presentation/home.dart';
+import 'package:cash_flow/features/home.dart';
+import 'package:cash_flow/features/settings/views/settings.dart';
+import 'package:cash_flow/features/transactions/view/transactions.dart';
 import 'package:flutter/material.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -15,9 +17,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   // Placeholder pages for other tabs
   final List<Widget> _pages = [
     HomeScreen(),
-    const Center(child: Text('Transactions Page')),
+    TransactionsScreen(),
     const Center(child: Text('Reports Page')),
-    const Center(child: Text('Settings Page')),
+    SettingsScreen(),
   ];
 
   @override

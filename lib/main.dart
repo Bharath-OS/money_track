@@ -1,6 +1,6 @@
 import 'package:cash_flow/core/services/auth.dart';
-import 'package:cash_flow/presentation/auth/login.dart';
-import 'package:cash_flow/presentation/viewmodel/viewmodel.dart';
+import 'package:cash_flow/features/auth/login.dart';
+import 'package:cash_flow/features/viewmodel/viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/widgets/nav_bar.dart';

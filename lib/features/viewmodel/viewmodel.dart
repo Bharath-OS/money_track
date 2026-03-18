@@ -1,3 +1,4 @@
+import 'package:cash_flow/core/services/auth.dart';
 import 'package:flutter/material.dart';
 import '../../data/user.dart';
 
@@ -28,9 +29,10 @@ class UserViewModel extends ChangeNotifier {
   }
 
   // Clear user on logout
-  void clearUser() {
+  void signOut() {
     _currentUser = null;
     _isLoading = false;
+    AuthServices().signOut();
     notifyListeners();
   }
 }

@@ -2,7 +2,8 @@ import 'package:cash_flow/core/constants/appcolors.dart';
 import 'package:cash_flow/core/services/auth.dart';
 import 'package:cash_flow/core/widgets/app_fab.dart';
 import 'package:cash_flow/data/user.dart';
-import 'package:cash_flow/presentation/viewmodel/viewmodel.dart';
+import 'package:cash_flow/features/transactions/view/add_transactions.dart';
+import 'package:cash_flow/features/viewmodel/viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,7 +18,14 @@ class HomeScreen extends StatelessWidget {
     final userProvider = Provider.of<UserViewModel>(context);
     return Scaffold(
       backgroundColor: AppColors.background,
-      floatingActionButton: AppFloatingActionButton(onPressed: () {}),
+      floatingActionButton: AppFloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddTransactionScreen()),
+          );
+        },
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -25,7 +33,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Section
-              _buildHeader(userProvider.currentUser?.username, context),
+              _buildHeader(userProvider.currentUser, context),
               const SizedBox(height: 24),
 
               // Total Balance Card
@@ -113,13 +121,13 @@ class HomeScreen extends StatelessWidget {
 
   // --- LOCAL REUSABLE WIDGET METHODS ---
 
-  Widget _buildHeader(String? userName, BuildContext context) {
+  Widget _buildHeader(AppUser? user, BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 24,
           backgroundImage: NetworkImage(
-            'https://i.pravatar.cc/150?u=alex',
+            '${user?.photoURL}',
           ), // Placeholder image
         ),
         const SizedBox(width: 12),
@@ -136,7 +144,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Text(
-              'Good morning, \n$userName',
+              'Good morning, \n${user?.username}',
               softWrap: true,
               style: const TextStyle(
                 color: AppColors.darkText,
