@@ -280,8 +280,11 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
         border: InputBorder.none,
       ),
       validator: (val) {
-        if (val == null || val.isEmpty) return 'Enter amount';
-        if (double.tryParse(val) == null) return 'Invalid number';
+        if (val == null || val.isEmpty) return 'Please enter an amount';
+        final amount = double.tryParse(val);
+        if (amount == null) return 'Please enter a valid number';
+        if (amount == 0) return 'Amount cannot be zero';
+        if (amount < 0) return 'Please enter a positive value';
         return null;
       },
     );

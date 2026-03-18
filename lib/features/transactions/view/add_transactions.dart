@@ -267,6 +267,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         prefixStyle: TextStyle(fontSize: 56),
         border: InputBorder.none,
       ),
+      validator: (val) {
+        if (val == null || val.isEmpty) return 'Please enter an amount';
+        final amount = double.tryParse(val);
+        if (amount == null) return 'Please enter a valid number';
+        if (amount == 0) return 'Amount cannot be zero';
+        if (amount < 0) return 'Please enter a positive value';
+        return null;
+      },
     );
   }
 
