@@ -100,9 +100,9 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
       final updatedTransaction = widget.transaction.copyWith(
         isExpense: _isExpense,
         title: _titleController.text,
-        amount:
-            double.tryParse(_amountController.text) ??
-            widget.transaction.amount,
+        amount: _isExpense
+            ? (double.parse(_amountController.text) * -1)
+            : double.parse(_amountController.text),
         category: _selectedCategory,
         date: _selectedDate,
         paymentMode: _paymentMode,

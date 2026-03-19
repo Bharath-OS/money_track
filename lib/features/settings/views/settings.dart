@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'package:cash_flow/data/user.dart';
 import 'package:cash_flow/features/auth/login.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/appcolors.dart';
+import '../../../data/database.dart';
 import '../../viewmodel/viewmodel.dart'; // Add to pubspec.yaml
 
 class SettingsScreen extends StatefulWidget {
@@ -232,7 +235,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profile Section
-            _buildProfileHeader(userProvider.currentUser?.photoURL),
+            _buildProfileHeader(
+              userProvider.currentUser,
+              userProvider.currentUser?.photoURL,
+            ),
             const SizedBox(height: 32),
 
             // Preferences Section
@@ -301,7 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // --- REUSABLE COMPONENTS FOR THIS SCREEN ---
 
-  Widget _buildProfileHeader(String? imageUrl) {
+  Widget _buildProfileHeader(AppUser? user, String? imageUrl) {
     return Row(
       children: [
         Stack(
@@ -311,7 +317,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               backgroundColor: AppColors.border,
               // Keeping the network image as default since we aren't updating the UI yet
               backgroundImage: NetworkImage(
-                imageUrl ?? 'https://i.pravatar.cc/150?u=john',
+                imageUrl ??
+                    'https://th.bing.com/th/id/OIP.lcdOc6CAIpbvYx3XHfoJ0gHaF3?w=188&h=149&c=7&r=0&o=7&dpr=2&pid=1.7&rm=3',
               ),
             ),
             Positioned(
@@ -328,27 +335,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: EdgeInsets.zero, // Centers the icon
                   iconSize: 16,
                   icon: const Icon(Icons.edit, color: Colors.white),
-                  onPressed: _pickImage, // Calls the image picker
+                  onPressed: () async {
+                    await _pickImage();
+                    if (_image != null) {
+                      final imageURL = await ImageDatabaseServices.uploadImage(
+                        image: _image!,
+                        userId: user!.uid!,
+                      );
+                      FirebaseAuth.instance.currentUser?.updatePhotoURL(
+                        imageURL['url'],
+                      );
+                    }
+                  }, // Calls the image picker
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(width: 20),
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "John Doe",
-              style: TextStyle(
+              "${user!.username}",
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: AppColors.darkText,
               ),
             ),
             Text(
-              "john.doe@example.com",
-              style: TextStyle(color: AppColors.secondaryText),
+              user.email ?? 'example@gmail.com',
+              style: const TextStyle(color: AppColors.secondaryText),
             ),
           ],
         ),

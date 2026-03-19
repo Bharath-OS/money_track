@@ -127,7 +127,8 @@ class HomeScreen extends StatelessWidget {
         CircleAvatar(
           radius: 24,
           backgroundImage: NetworkImage(
-            '${user?.photoURL}',
+            user?.photoURL ??
+                "https://th.bing.com/th/id/OIP.lcdOc6CAIpbvYx3XHfoJ0gHaF3?w=188&h=149&c=7&r=0&o=7&dpr=2&pid=1.7&rm=3",
           ), // Placeholder image
         ),
         const SizedBox(width: 12),

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TransactionModel {
   final String id;
   final String userId;
@@ -57,7 +59,7 @@ class TransactionModel {
       'isExpense': isExpense,
       'amount': amount,
       'category': category,
-      'date': date.millisecondsSinceEpoch,
+      'date': date, // Store as DateTime (Firestore converts to Timestamp)
       'paymentMode': paymentMode,
       'note': note,
       'attachmentUrl': attachmentUrl,
@@ -65,6 +67,15 @@ class TransactionModel {
   }
 
   factory TransactionModel.fromMap(Map<String, dynamic> map, String documentId) {
+    DateTime parsedDate;
+    if (map['date'] is Timestamp) {
+      parsedDate = (map['date'] as Timestamp).toDate();
+    } else if (map['date'] is int) {
+      parsedDate = DateTime.fromMillisecondsSinceEpoch(map['date']);
+    } else {
+      parsedDate = DateTime.now();
+    }
+
     return TransactionModel(
       id: documentId,
       userId: map['userId'] ?? '',
@@ -72,10 +83,11 @@ class TransactionModel {
       isExpense: map['isExpense'] ?? true,
       amount: map['amount']?.toDouble() ?? 0.0,
       category: map['category'] ?? '',
-      date: DateTime.fromMillisecondsSinceEpoch(map['date'] ?? 0),
+      date: parsedDate,
       paymentMode: map['paymentMode'] ?? '',
       note: map['note'] ?? '',
       attachmentUrl: map['attachmentUrl'],
     );
   }
 }
+
