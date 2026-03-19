@@ -1,4 +1,5 @@
 import 'package:cash_flow/features/transactions/viewmodel/transaction_viewmodel.dart';
+import 'package:cash_flow/data/database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -6,11 +7,17 @@ import '../../../core/constants/appcolors.dart';
 import '../../../data/models/transaction_model.dart';
 import 'edit_transactions.dart';
 
-class TransactionDetailsScreen extends StatelessWidget {
+class TransactionDetailsScreen extends StatefulWidget {
   final TransactionModel transaction;
 
   const TransactionDetailsScreen({super.key, required this.transaction});
 
+  @override
+  State<TransactionDetailsScreen> createState() =>
+      _TransactionDetailsScreenState();
+}
+
+class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   void _showZoomedImage(BuildContext context, String imageUrl) {
     showDialog(
       context: context,
@@ -52,16 +59,25 @@ class TransactionDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<TransactionViewmodel>(
-      builder: (context, transactionProvider, child) {
-        // Find the most up-to-date version of this transaction
-        final currentTransaction = transactionProvider.transactions.firstWhere(
-          (t) => t.id == transaction.id,
-          orElse: () => transaction,
+    return StreamBuilder(
+      stream: DatabaseServices.getTransactionStream(widget.transaction.id),
+      builder: (context, snapShot) {
+        if (snapShot.hasError) {
+          return const Scaffold(body: Center(child: Text('Something went wrong')));
+        }
+        if (snapShot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        if (!snapShot.hasData || snapShot.data?.data() == null) {
+          return const Scaffold(body: Center(child: Text('No transaction found')));
+        }
+        final transaction = TransactionModel.fromMap(
+          snapShot.data!.data()! as Map<String, dynamic>,
+          snapShot.data!.id,
         );
 
-        // Format date string
-        String formattedDate = DateFormat('MM/dd/yyyy').format(currentTransaction.date);
+        // Format date string INSIDE the builder
+        String formattedDate = DateFormat('MM/dd/yyyy').format(transaction.date);
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -85,7 +101,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          EditTransactionScreen(transaction: currentTransaction),
+                          EditTransactionScreen(transaction: transaction),
                     ),
                   );
                 },
@@ -100,19 +116,19 @@ class TransactionDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 // Amount
                 Text(
-                  currentTransaction.isExpense
-                      ? '-\$${currentTransaction.amount.abs().toStringAsFixed(2)}'
-                      : '+\$${currentTransaction.amount.abs().toStringAsFixed(2)}',
+                  transaction.isExpense
+                      ? '-\$${transaction.amount.abs().toStringAsFixed(2)}'
+                      : '+\$${transaction.amount.abs().toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
-                    color: currentTransaction.isExpense ? Colors.red : Colors.green,
+                    color: transaction.isExpense ? Colors.red : Colors.green,
                   ),
                 ),
                 const SizedBox(height: 8),
                 // Title
                 Text(
-                  currentTransaction.title,
+                  transaction.title,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -122,7 +138,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 // Type
                 Text(
-                  currentTransaction.isExpense ? 'Expense' : 'Income',
+                  transaction.isExpense ? 'Expense' : 'Income',
                   style: const TextStyle(
                     color: AppColors.secondaryText,
                     fontSize: 16,
@@ -140,14 +156,14 @@ class TransactionDetailsScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      _buildDetailRow('Category', currentTransaction.category),
+                      _buildDetailRow('Category', transaction.category),
                       const Divider(height: 30, color: Colors.black12),
                       _buildDetailRow('Date', formattedDate),
                       const Divider(height: 30, color: Colors.black12),
-                      _buildDetailRow('Payment Mode', currentTransaction.paymentMode),
-                      if (currentTransaction.note.isNotEmpty) ...[
+                      _buildDetailRow('Payment Mode', transaction.paymentMode),
+                      if (transaction.note.isNotEmpty) ...[
                         const Divider(height: 30, color: Colors.black12),
-                        _buildDetailRow('Description', currentTransaction.note),
+                        _buildDetailRow('Description', transaction.note),
                       ],
                     ],
                   ),
@@ -156,8 +172,8 @@ class TransactionDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 30),
 
                 // Attachment Section if exists
-                if (currentTransaction.attachmentUrl != null &&
-                    currentTransaction.attachmentUrl!.isNotEmpty) ...[
+                if (transaction.attachmentUrl != null &&
+                    transaction.attachmentUrl!.isNotEmpty) ...[
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -172,7 +188,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   GestureDetector(
                     onTap: () =>
-                        _showZoomedImage(context, currentTransaction.attachmentUrl!),
+                        _showZoomedImage(context, transaction.attachmentUrl!),
                     child: Container(
                       height: 150,
                       width: double.infinity,
@@ -180,7 +196,7 @@ class TransactionDetailsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.black12),
                         image: DecorationImage(
-                          image: NetworkImage(currentTransaction.attachmentUrl!),
+                          image: NetworkImage(transaction.attachmentUrl!),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -214,6 +230,7 @@ class TransactionDetailsScreen extends StatelessWidget {
       },
     );
   }
+
 
   Widget _buildDetailRow(String label, String value) {
     return Row(

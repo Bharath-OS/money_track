@@ -1,11 +1,14 @@
+import 'dart:io';
 import 'package:cash_flow/core/services/auth.dart';
 import 'package:cash_flow/data/models/transaction_model.dart';
 import 'package:cash_flow/features/viewmodel/viewmodel.dart';
 import 'package:cash_flow/features/transactions/viewmodel/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart'; // Add to pubspec.yaml for date formatting
 import 'package:provider/provider.dart';
 import '../../../core/constants/appcolors.dart';
+import '../../../core/services/image_services.dart';
 import '../../../core/widgets/buttons.dart';
 
 class AddTransactionScreen extends StatefulWidget {
@@ -23,6 +26,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String? _selectedCategory;
   String _paymentMode = 'Cash';
   DateTime _selectedDate = DateTime.now();
+  String? _selectedImageURL;
 
   // Controllers
   final _amountController = TextEditingController(text: "0.00");
@@ -92,6 +96,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         date: _selectedDate,
         paymentMode: _paymentMode,
         note: _noteController.text,
+        attachmentUrl: _selectedImageURL,
       );
 
       final result = await context.read<TransactionViewmodel>().addTransaction(
@@ -357,31 +362,53 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   Widget _buildAttachmentButton() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border, style: BorderStyle.none),
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFF8FAFD),
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.cloud_upload_outlined,
-            color: AppColors.primaryBlue,
-            size: 32,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Add Attachment',
-            style: TextStyle(
-              color: AppColors.primaryBlue,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          // You would typically show a preview here if a file was picked
-        ],
+    return GestureDetector(
+      onTap: () async {
+        final image = await ImageServices.pickImage();
+        print('This is the image path ${image?.path}');
+        if (image != null) {
+          final result = await ImageDatabaseServices.uploadImage(
+            image: image,
+            userId: AuthServices().currentUser!.uid,
+          );
+          if (result['url'] != null) {
+            setState(() {
+              _selectedImageURL = result['url'];
+            });
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(result['message']!)));
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border, style: BorderStyle.none),
+          borderRadius: BorderRadius.circular(16),
+          color: const Color(0xFFF8FAFD),
+        ),
+        child: _selectedImageURL != null
+            ? Image.network(_selectedImageURL!, fit: BoxFit.cover)
+            : Column(
+                children: [
+                  const Icon(
+                    Icons.cloud_upload_outlined,
+                    color: AppColors.primaryBlue,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Add Attachment',
+                    style: TextStyle(
+                      color: AppColors.primaryBlue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // You would typically show a preview here if a file was picked
+                ],
+              ),
       ),
     );
   }

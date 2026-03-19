@@ -1,3 +1,5 @@
+import 'package:cash_flow/core/services/auth.dart';
+import 'package:cash_flow/data/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/appcolors.dart';
@@ -145,9 +147,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ),
 
           // 3. Transactions List
-          Consumer<TransactionViewmodel>(
-            builder: (context, transactionProvider, child) {
-              if (transactionProvider.isLoading) {
+          StreamBuilder(
+            stream: DatabaseServices.transactions
+                .where('userId', isEqualTo: AuthServices().currentUser?.uid)
+                .snapshots(),
+            builder: (context, snapshots) {
+              if (snapshots.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
               

@@ -4,6 +4,7 @@ import 'package:cash_flow/features/viewmodel/viewmodel.dart';
 import 'package:cash_flow/features/transactions/viewmodel/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/widgets/nav_bar.dart';
 import 'data/user.dart';
 import 'firebase_options.dart';
@@ -18,6 +19,12 @@ void main() async {
         "349379008181-qaksk6u6iunqu2556d9vsmadl9ghkmor.apps.googleusercontent.com",
     serverClientId:
         "349379008181-qaksk6u6iunqu2556d9vsmadl9ghkmor.apps.googleusercontent.com",
+  );
+
+  await Supabase.initialize(
+    url: 'https://ogtwbfdlftmnjoiltndw.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ndHdiZmRsZnRtbmpvaWx0bmR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4ODU2OTMsImV4cCI6MjA4OTQ2MTY5M30.prKZuc3rKyBLrdTStLMvE89TXM3_2m23JwzIngoji08',
   );
 
   runApp(CashFlow());
