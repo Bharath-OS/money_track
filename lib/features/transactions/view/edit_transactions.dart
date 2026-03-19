@@ -1,6 +1,7 @@
-import 'package:cash_flow/data/database.dart';
+import 'package:cash_flow/features/transactions/viewmodel/transaction_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../data/models/transaction_model.dart';
@@ -109,15 +110,24 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
         note: _noteController.text,
       );
       try {
-        await DatabaseServices.updateTransaction(
-          transaction: updatedTransaction,
+        final result = await context.read<TransactionViewmodel>().updateTransaction(
+          updatedTransaction,
         );
+        if (result) {
+          Navigator.pop(context, updatedTransaction);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to update transaction'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
-      Navigator.pop(context, updatedTransaction);
     }
   }
 
