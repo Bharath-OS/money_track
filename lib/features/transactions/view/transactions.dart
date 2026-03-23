@@ -3,10 +3,8 @@ import 'package:cash_flow/data/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/appcolors.dart';
-import 'package:provider/provider.dart';
 import '../../../data/models/transaction_model.dart';
 import 'transaction_details.dart';
-import '../viewmodel/transaction_viewmodel.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -19,9 +17,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'All'; // 'All', 'Income', 'Expense'
   DateTimeRange? _selectedDateRange;
-
-  // Dummy data representing transactions
-  List<Map<String, dynamic>> _allTransactions = [];
 
   // Function to open the Date Range Picker
   Future<void> _selectDateRange() async {
@@ -48,9 +43,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       setState(() {
         _selectedDateRange = picked;
       });
-      // Handle your filtering logic here based on 'picked'
-      print("Selected Range: ${picked.start} to ${picked.end}");
     }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -70,12 +69,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.calendar_month_outlined,
-              color: AppColors.darkText,
+              color: _selectedDateRange != null
+                  ? AppColors.primaryBlue
+                  : AppColors.darkText,
             ),
             onPressed: _selectDateRange,
           ),
+          if (_selectedDateRange != null)
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.red, size: 20),
+              onPressed: () => setState(() => _selectedDateRange = null),
+            ),
         ],
       ),
       body: Column(
@@ -105,55 +111,85 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ),
 
           // 3. Transactions List
-          StreamBuilder(
-            stream: DatabaseServices.transactions
-                .where('userId', isEqualTo: AuthServices().currentUser?.uid)
-                .snapshots(),
-            builder: (context, snapshots) {
-              if (snapshots.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: DatabaseServices.transactions
+                  .where('userId', isEqualTo: AuthServices().currentUser?.uid)
+                  .snapshots(),
+              builder: (context, snapshots) {
+                if (snapshots.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              List<Object?> transactions = snapshots.data!.docs
-                  .map((doc) => doc.data())
-                  .toList();
-              if (!snapshots.hasData) {
-                return const Center(child: Text('No transactions found'));
-              }
-              if (_selectedFilter == 'Income') {
-                _allTransactions = List.from(
-                  snapshots.data!.docs
-                          .where((doc) => doc['isExpense'] == false)
-                          .map((doc) => doc.data())
-                          .toList()
-                      as List<Map<String, dynamic>>,
-                );
-              } else if (_selectedFilter == 'Expense') {
-                _allTransactions = List.from(
-                  snapshots.data!.docs
-                          .where((doc) => doc['isExpense'] == true)
-                          .map((doc) => doc.data())
-                          .toList()
-                      as List<Map<String, dynamic>>,
-                );
-              } else {
-                _allTransactions =
-                    snapshots.data!.docs.map((doc) => doc.data()).toList()
-                        as List<Map<String, dynamic>>;
-              }
-              return Expanded(
-                child: ListView.builder(
+                if (!snapshots.hasData || snapshots.data!.docs.isEmpty) {
+                  return const Center(child: Text('No transactions found'));
+                }
+
+                // Filtering logic applied locally to the stream data
+                final filteredDocs = snapshots.data!.docs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+
+                  // Filter by Type (Income/Expense)
+                  if (_selectedFilter == 'Income' && data['isExpense'] == true)
+                    return false;
+                  if (_selectedFilter == 'Expense' &&
+                      data['isExpense'] == false)
+                    return false;
+
+                  // Filter by Search Text
+                  final title = data['title']?.toString().toLowerCase() ?? '';
+                  final search = _searchController.text.toLowerCase();
+                  if (search.isNotEmpty && !title.contains(search))
+                    return false;
+
+                  // Filter by Date Range
+                  if (_selectedDateRange != null) {
+                    final timestamp = data['date'] as Timestamp?;
+                    if (timestamp == null) return false;
+                    final date = timestamp.toDate();
+
+                    // Normalize to start of day for comparison
+                    final startDate = DateTime(
+                      _selectedDateRange!.start.year,
+                      _selectedDateRange!.start.month,
+                      _selectedDateRange!.start.day,
+                    );
+                    final endDate = DateTime(
+                      _selectedDateRange!.end.year,
+                      _selectedDateRange!.end.month,
+                      _selectedDateRange!.end.day,
+                      23,
+                      59,
+                      59,
+                    );
+
+                    if (date.isBefore(startDate) || date.isAfter(endDate))
+                      return false;
+                  }
+
+                  return true;
+                }).toList();
+
+                if (filteredDocs.isEmpty) {
+                  return const Center(
+                    child: Text('No matching transactions found'),
+                  );
+                }
+
+                return ListView.builder(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 10,
                   ),
-                  itemCount: _allTransactions.length,
+                  itemCount: filteredDocs.length,
                   itemBuilder: (context, index) {
-                    final map = _allTransactions[index];
+                    final map =
+                        filteredDocs[index].data() as Map<String, dynamic>;
                     final transactionModel = TransactionModel.fromMap(
                       map,
-                      map['id'],
+                      map['id'] ?? '',
                     );
+
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -173,9 +209,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       ),
                     );
                   },
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -191,6 +227,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         hintText: 'Search transactions',
         hintStyle: const TextStyle(color: AppColors.secondaryText),
         prefixIcon: const Icon(Icons.search, color: AppColors.secondaryText),
+        suffixIcon: _searchController.text.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear, size: 20),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {});
+                },
+              )
+            : null,
         filled: true,
         fillColor: const Color(0xFFF1F4F9),
         border: OutlineInputBorder(
@@ -200,11 +245,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         contentPadding: const EdgeInsets.symmetric(vertical: 0),
       ),
       onChanged: (value) {
-        _allTransactions = _allTransactions.where((transaction) {
-          final title = transaction['title'].toString().toLowerCase();
-          final search = value.toLowerCase();
-          return title.contains(search);
-        }).toList();
+        setState(() {}); // Trigger rebuild to apply filter in StreamBuilder
       },
     );
   }
