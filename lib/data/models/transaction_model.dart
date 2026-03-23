@@ -66,7 +66,7 @@ class TransactionModel {
     };
   }
 
-  factory TransactionModel.fromMap(Map<String, dynamic> map, String documentId) {
+  factory TransactionModel.fromMap(Map<String, dynamic> map, String id) {
     DateTime parsedDate;
     if (map['date'] is Timestamp) {
       parsedDate = (map['date'] as Timestamp).toDate();
@@ -77,7 +77,7 @@ class TransactionModel {
     }
 
     return TransactionModel(
-      id: documentId,
+      id: map['id'] ?? '',
       userId: map['userId'] ?? '',
       title: map['title'] ?? '',
       isExpense: map['isExpense'] ?? true,
@@ -90,4 +90,3 @@ class TransactionModel {
     );
   }
 }
-

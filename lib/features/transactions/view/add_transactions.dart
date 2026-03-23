@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/appcolors.dart';
 import '../../../core/services/image_services.dart';
 import '../../../core/widgets/buttons.dart';
+import '../../../data/database.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});

@@ -235,10 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profile Section
-            _buildProfileHeader(
-              userProvider.currentUser,
-              userProvider.currentUser?.photoURL,
-            ),
+            _buildProfileHeader(context),
             const SizedBox(height: 32),
 
             // Preferences Section
@@ -307,7 +304,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // --- REUSABLE COMPONENTS FOR THIS SCREEN ---
 
-  Widget _buildProfileHeader(AppUser? user, String? imageUrl) {
+  Widget _buildProfileHeader(BuildContext context) {
+    final user = context.watch<UserViewModel>().currentUser;
     return Row(
       children: [
         Stack(
@@ -317,7 +315,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               backgroundColor: AppColors.border,
               // Keeping the network image as default since we aren't updating the UI yet
               backgroundImage: NetworkImage(
-                imageUrl ??
+                user!.photoURL ??
                     'https://th.bing.com/th/id/OIP.lcdOc6CAIpbvYx3XHfoJ0gHaF3?w=188&h=149&c=7&r=0&o=7&dpr=2&pid=1.7&rm=3',
               ),
             ),
@@ -340,11 +338,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (_image != null) {
                       final imageURL = await ImageDatabaseServices.uploadImage(
                         image: _image!,
-                        userId: user!.uid!,
+                        userId: user.uid!,
                       );
                       FirebaseAuth.instance.currentUser?.updatePhotoURL(
                         imageURL['url'],
                       );
+                      user.photoURL = imageURL['url'];
                     }
                   }, // Calls the image picker
                 ),

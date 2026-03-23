@@ -1,17 +1,29 @@
 import 'package:cash_flow/core/constants/appcolors.dart';
 import 'package:cash_flow/core/services/auth.dart';
 import 'package:cash_flow/core/widgets/app_fab.dart';
+import 'package:cash_flow/data/database.dart';
 import 'package:cash_flow/data/user.dart';
 import 'package:cash_flow/features/transactions/view/add_transactions.dart';
 import 'package:cash_flow/features/viewmodel/viewmodel.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'auth/login.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   // AppUser? user;
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,101 +38,117 @@ class HomeScreen extends StatelessWidget {
           );
         },
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Section
-              _buildHeader(userProvider.currentUser, context),
-              const SizedBox(height: 24),
-
-              // Total Balance Card
-              _buildBalanceCard(),
-              const SizedBox(height: 20),
-
-              // Income & Expense Cards
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      title: 'INCOME',
-                      amount: '\$4,200',
-                      percentage: '+5.2%',
-                      isIncome: true,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      title: 'EXPENSE',
-                      amount: '\$1,850',
-                      percentage: '-1.1%',
-                      isIncome: false,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // Recent Transactions Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Recent Transactions',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.darkText,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'View All',
-                      style: TextStyle(
-                        color: AppColors.primaryBlue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Transactions List
-              _buildTransactionTile(
-                icon: Icons.shopping_cart_outlined,
-                title: 'Groceries',
-                date: 'Mar 12, 2024',
-                amount: '-\$64.20',
-                color: Colors.orange,
-              ),
-              _buildTransactionTile(
-                icon: Icons.account_balance_wallet_outlined,
-                title: 'Salary',
-                date: 'Mar 10, 2024',
-                amount: '+\$3,200.00',
-                color: AppColors.income,
-              ),
-              _buildTransactionTile(
-                icon: Icons.coffee_outlined,
-                title: 'Coffee',
-                date: 'Mar 09, 2024',
-                amount: '-\$4.50',
-                color: Colors.blueAccent,
-              ),
-            ],
-          ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: DatabaseServices.getTransactionStream(
+          AuthServices().currentUser!.uid,
         ),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return CircularProgressIndicator();
+          num income = 0;
+          num expense = 0;
+          for (var doc in snapshot.data!.docs) {
+            if (doc['isExpense']) {
+              expense += (doc['amount'] * -1);
+              continue;
+            }
+            income += doc['amount'];
+          }
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Section
+                  _buildHeader(userProvider.currentUser, context),
+                  const SizedBox(height: 24),
+
+                  // Total Balance Card
+                  _buildBalanceCard(),
+                  const SizedBox(height: 20),
+
+                  // Income & Expense Cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSummaryCard(
+                          title: 'INCOME',
+                          amount: '\₹$income',
+                          percentage: '+5.2%',
+                          isIncome: true,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildSummaryCard(
+                          title: 'EXPENSE',
+                          amount: '\₹$expense',
+                          percentage: '-1.1%',
+                          isIncome: false,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Recent Transactions Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Recent Transactions',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkText,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: const Text(
+                          'View All',
+                          style: TextStyle(
+                            color: AppColors.primaryBlue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Transactions List
+                  _buildTransactionTile(
+                    icon: Icons.shopping_cart_outlined,
+                    title: 'Groceries',
+                    date: 'Mar 12, 2024',
+                    amount: '-\$64.20',
+                    color: Colors.orange,
+                  ),
+                  _buildTransactionTile(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'Salary',
+                    date: 'Mar 10, 2024',
+                    amount: '+\$3,200.00',
+                    color: AppColors.income,
+                  ),
+                  _buildTransactionTile(
+                    icon: Icons.coffee_outlined,
+                    title: 'Coffee',
+                    date: 'Mar 09, 2024',
+                    amount: '-\$4.50',
+                    color: Colors.blueAccent,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   // --- LOCAL REUSABLE WIDGET METHODS ---
-
   Widget _buildHeader(AppUser? user, BuildContext context) {
     return Row(
       children: [

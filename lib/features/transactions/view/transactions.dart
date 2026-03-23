@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/appcolors.dart';
 import 'package:provider/provider.dart';
+import '../../../data/models/transaction_model.dart';
 import 'transaction_details.dart';
 import '../viewmodel/transaction_viewmodel.dart';
 
@@ -20,50 +21,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   DateTimeRange? _selectedDateRange;
 
   // Dummy data representing transactions
-  final List<Map<String, dynamic>> _allTransactions = [
-    {
-      'title': 'Apple Store',
-      'category': 'Gadgets & Tech',
-      'amount': -999.00,
-      'icon': Icons.shopping_bag_outlined,
-      'color': Colors.blue,
-    },
-    {
-      'title': 'Salary Deposit',
-      'category': 'Monthly Income',
-      'amount': 4500.00,
-      'icon': Icons.account_balance_wallet_outlined,
-      'color': AppColors.income,
-    },
-    {
-      'title': 'Starbucks Coffee',
-      'category': 'Food & Drink',
-      'amount': -12.50,
-      'icon': Icons.restaurant_menu_outlined,
-      'color': Colors.orange,
-    },
-    {
-      'title': 'Uber Trip',
-      'category': 'Transport',
-      'amount': -24.00,
-      'icon': Icons.directions_car_filled_outlined,
-      'color': Colors.blueAccent,
-    },
-    {
-      'title': 'Netflix Subscription',
-      'category': 'Entertainment',
-      'amount': -15.99,
-      'icon': Icons.movie_outlined,
-      'color': Colors.purple,
-    },
-    {
-      'title': 'Freelance Work',
-      'category': 'Side Hustle',
-      'amount': 1200.00,
-      'icon': Icons.work_outline,
-      'color': Colors.teal,
-    },
-  ];
+  List<Map<String, dynamic>> _allTransactions = [];
 
   // Function to open the Date Range Picker
   Future<void> _selectDateRange() async {
@@ -155,23 +113,47 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               if (snapshots.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
-              final transactions = transactionProvider.transactions;
-              
-              if (transactions.isEmpty) {
+
+              List<Object?> transactions = snapshots.data!.docs
+                  .map((doc) => doc.data())
+                  .toList();
+              if (!snapshots.hasData) {
                 return const Center(child: Text('No transactions found'));
               }
-
+              if (_selectedFilter == 'Income') {
+                _allTransactions = List.from(
+                  snapshots.data!.docs
+                          .where((doc) => doc['isExpense'] == false)
+                          .map((doc) => doc.data())
+                          .toList()
+                      as List<Map<String, dynamic>>,
+                );
+              } else if (_selectedFilter == 'Expense') {
+                _allTransactions = List.from(
+                  snapshots.data!.docs
+                          .where((doc) => doc['isExpense'] == true)
+                          .map((doc) => doc.data())
+                          .toList()
+                      as List<Map<String, dynamic>>,
+                );
+              } else {
+                _allTransactions =
+                    snapshots.data!.docs.map((doc) => doc.data()).toList()
+                        as List<Map<String, dynamic>>;
+              }
               return Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 10,
                   ),
-                  itemCount: transactions.length,
+                  itemCount: _allTransactions.length,
                   itemBuilder: (context, index) {
-                    final transactionModel = transactions[index];
-
+                    final map = _allTransactions[index];
+                    final transactionModel = TransactionModel.fromMap(
+                      map,
+                      map['id'],
+                    );
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -218,7 +200,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         contentPadding: const EdgeInsets.symmetric(vertical: 0),
       ),
       onChanged: (value) {
-        // Implement real-time search logic
+        _allTransactions = _allTransactions.where((transaction) {
+          final title = transaction['title'].toString().toLowerCase();
+          final search = value.toLowerCase();
+          return title.contains(search);
+        }).toList();
       },
     );
   }

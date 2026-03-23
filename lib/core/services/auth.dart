@@ -87,6 +87,7 @@ class AuthServices {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       if (userCredential.user != null) {
+        userCredential.user!.updateDisplayName(userName);
         return AppUser(
           uid: userCredential.user?.uid,
           username: userCredential.user?.displayName ?? userName,

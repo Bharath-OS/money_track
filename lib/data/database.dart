@@ -35,6 +35,30 @@ class ImageDatabaseServices {
 class DatabaseServices {
   static final db = FirebaseFirestore.instance;
   static final CollectionReference transactions = db.collection('transactions');
+  static late var _allTransactions;
+
+  DatabaseServices() {
+    _allTransactions = transactions.snapshots();
+  }
+
+  static Future<double> getTotalAmount() async {
+    QuerySnapshot snapshot = await transactions.get();
+    double total = 0;
+    for (var doc in snapshot.docs) {
+      total += (doc['amount'] as num).toDouble();
+    }
+    return total;
+  }
+
+  double getIncome() {
+    double income = 0;
+    for (var doc in _allTransactions.docs) {
+      if (doc['isExpense'] == false) {
+        income += (doc['amount'] as num).toDouble();
+      }
+    }
+    return income;
+  }
 
   static Future<bool> addTransactions({
     required TransactionModel transaction,
@@ -48,8 +72,20 @@ class DatabaseServices {
     }
   }
 
-  static Stream<DocumentSnapshot> getTransactionStream(String id) {
-    return transactions.doc(id).snapshots();
+  static Stream<QuerySnapshot<Object?>> getTransactionStream(String id) {
+    // return transactions.doc(id).snapshots();
+    return transactions.where('userId', isEqualTo: id).snapshots();
+  }
+
+  static void getTotalIncome() async {
+    final expenses = await transactions
+        .where('isExpense', isEqualTo: true)
+        .get();
+    num totalExpenses = 0;
+    for (var transaction in expenses.docs) {
+      totalExpenses += (transaction['amount'] * -1);
+    }
+    print(totalExpenses);
   }
 
   static Future<bool> updateTransaction({

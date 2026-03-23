@@ -60,24 +60,35 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: DatabaseServices.getTransactionStream(widget.transaction.id),
+      stream: DatabaseServices.transactions
+          .where('id', isEqualTo: widget.transaction.id)
+          .snapshots(),
       builder: (context, snapShot) {
         if (snapShot.hasError) {
-          return const Scaffold(body: Center(child: Text('Something went wrong')));
+          return const Scaffold(
+            body: Center(child: Text('Something went wrong')),
+          );
         }
         if (snapShot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-        if (!snapShot.hasData || snapShot.data?.data() == null) {
-          return const Scaffold(body: Center(child: Text('No transaction found')));
+        if (!snapShot.hasData) {
+          return const Scaffold(
+            body: Center(child: Text('No transaction found')),
+          );
         }
+        final map = snapShot.data!.docs.first.data();
         final transaction = TransactionModel.fromMap(
-          snapShot.data!.data()! as Map<String, dynamic>,
-          snapShot.data!.id,
+          map as Map<String, dynamic>,
+          map['id'],
         );
 
         // Format date string INSIDE the builder
-        String formattedDate = DateFormat('MM/dd/yyyy').format(transaction.date);
+        String formattedDate = DateFormat(
+          'MM/dd/yyyy',
+        ).format(transaction.date);
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -230,7 +241,6 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
       },
     );
   }
-
 
   Widget _buildDetailRow(String label, String value) {
     return Row(
