@@ -72,6 +72,20 @@ class DatabaseServices {
     }
   }
 
+  static Future<void> printDocuments() async {
+    final trans = await transactions.get();
+    for (var element in trans.docs) {
+      print(element.data());
+    }
+  }
+
+  static void something() async {
+    QuerySnapshot trans = await transactions.get();
+    final hello = trans.docs[0].data() as Map<String, dynamic>;
+    print(trans.docs[0].data().runtimeType);
+    print(hello.runtimeType);
+  }
+
   static Stream<QuerySnapshot<Object?>> getTransactionStream(String id) {
     // return transactions.doc(id).snapshots();
     return transactions.where('userId', isEqualTo: id).snapshots();

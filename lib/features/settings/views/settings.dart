@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:cash_flow/data/user.dart';
 import 'package:cash_flow/features/auth/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,9 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/appcolors.dart';
 import '../../../data/database.dart';
-import '../../viewmodel/viewmodel.dart'; // Add to pubspec.yaml
+import '../../viewmodel/viewmodel.dart';
+import 'edit_user_screen.dart';
+import 'update_password_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -281,13 +282,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.person_outline,
               title: "Edit User Details",
               showArrow: true,
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EditUserScreen()),
+                );
+              },
             ),
             _buildSettingTile(
               icon: Icons.lock_outline,
               title: "Change Password",
               showArrow: true,
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UpdatePasswordScreen(),
+                  ),
+                );
+              },
             ),
             _buildSettingTile(
               icon: Icons.logout,
